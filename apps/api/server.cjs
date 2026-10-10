@@ -238,7 +238,17 @@ function createApp({ filename = path.resolve(__dirname,'../../.data/rushit.sqlit
   return {server,db,close:()=>{for(const c of clients)c.res.end();server.close();}};
 }
 if(require.main===module){
-  const app=createApp();app.server.listen(Number(process.env.PORT)||4174,'127.0.0.1',()=>{
+  const port=Number(process.env.PORT)||4174;
+  const app=createApp();
+  app.server.on('error',error=>{
+    if(error.code==='EADDRINUSE'){
+      console.error(`Port ${port} is already in use. If Rush IT is running, open http://localhost:${port}.`);
+      console.error('To restart, press Ctrl+C in the terminal running Rush IT, then run npm run dev again.');
+      console.error('To use another port in PowerShell: $env:PORT="4175"; npm run dev');
+    }else console.error(`Rush IT could not start: ${error.message}`);
+    process.exit(1);
+  });
+  app.server.listen(port,'127.0.0.1',()=>{
     console.log(`RushIT foundation: http://localhost:${app.server.address().port}`);
     if(!app.db.prepare('SELECT id FROM users LIMIT 1').get())console.log('No accounts provisioned. Run npm run setup in another terminal.');
   });
