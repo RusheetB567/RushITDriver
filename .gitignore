@@ -13,3 +13,7 @@ private-evidence/
 # Local editor and OS files
 .DS_Store
 Thumbs.db
+.data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

@@ -1,36 +1,68 @@
-# Driver App — cisdriver3 analysis and replacement
+# Rush IT — Courier Operating System
 
-Local project prepared for review. No commits or pushes have been made.
+Independent courier platform under phased development. Nothing is staged, committed or pushed automatically. Git origin: https://github.com/RusheetB567/RushITDriver.git.
 
-## Documents
+## Start Rush IT 0.3
 
-- [Screenshot catalogue](docs/screens/SCREEN_CATALOGUE.md): observed screens, controls, evidence and open questions.
-- [Functional requirements](docs/FUNCTIONAL_REQUIREMENTS.md): requirements derived from the supplied screenshots.
-- [Platform blueprint](COURIER_PLATFORM_SPECIFICATION.md): proposed modern platform architecture, distinct from observed existing behaviour.
-
-## Project layout
-
-`docs/` holds analysis and requirements. `apps/` is reserved for application implementation. `packages/` is reserved for shared code. No runtime or framework has been selected or scaffolded yet.
-
-## Evidence handling
-
-Original screenshots remain at their supplied local locations and are excluded from Git. They contain operational and personal information. This repository records UI observations without copying private conversations or real job identifiers into fixtures.
-
-## Git workflow
-
-Git remote `origin` points to https://github.com/RusheetB567/RushITDriver.git. Configuring the remote does not upload files. Review local changes before staging or committing. The user will perform commits; do not automatically stage, commit, push, publish or create a pull request.
-
-
-## Run the review prototype
-
-Requires Node.js. No dependency installation is required.
+Requires Node.js 24.14 or later. Install the locked dependencies for PDF parsing and local OCR.
 
 ```powershell
+cd C:\Users\RusheetBhatta\Desktop\RushITDriver
+npm run setup
 npm start
 ```
 
-Open http://localhost:4173. Select the driver or admin demo account. Driver: open a job and advance through acceptance, pickup arrival, pickup, delivery arrival and POD. POD requires recipient name, photo and drawn signature. Admin: create sample jobs, assign drivers and confirm requested driver logoff. Switch accounts to review both surfaces.
+Setup asks for your organisation, administrator name/email and a password of at least 12 characters. Password input is hidden and only a salted scrypt hash is stored. There are no fixed accounts or demo passwords. Setup will not overwrite an existing account.
 
-`npm run check` checks JavaScript syntax; `npm test` verifies workflow ordering and mandatory POD fields.
+Open http://localhost:4174. Add driver and dispatcher accounts under **People & access**. Create a booking, choose its customer and POD policy, fill pickup/delivery and shipment details, then allocate it to a driver. Sign out and sign in as the driver, start a shift, and progress through acceptance, travel, pickup and delivery arrival. Failed delivery and dispatch-authorised reattempts are supported. Link reviewed cargo, scan its packages at both stops, then capture recipient, signature and photograph to complete delivery. Document intelligence reads PDF/JPG/PNG locally and requires review before saving cargo.
 
-This is a dependency-free responsive web prototype, not a production mobile release. State is stored in this browser's localStorage, including uploaded demo evidence. Use synthetic photos only; browser storage is not a secure evidence store. There is no backend identity verification, fleet GPS, camera barcode decoding, RTMS integration, cross-device messaging or server/offline synchronisation. Manual barcode entry records unique identifiers but does not verify real shipment labels. Delivery times remain display strings so `24:00` is preserved. The app uses Google Maps links and optionally loads a Google font.
+Users on the same computer can use separate browser profiles to review driver/dispatch simultaneously. The server binds to loopback; cross-device/network deployment is not configured.
+
+## Validate
+
+```powershell
+npm run check
+npm test
+```
+
+Tests run in one process, including real HTTP integration requests to an isolated test database, permission attacks, idempotency, revision conflicts and restart persistence. Test credentials exist only in test fixtures. Test data is separate from your `.data/rushit.sqlite` database.
+
+## Review the architecture
+
+- [Premium release, validation and remaining capabilities](docs/project/PREMIUM_RELEASE.md)
+- [UI audit and upgrade design](docs/project/PREMIUM_UPGRADE.md)
+
+- [Complete product architecture and 27 first-task deliverables](docs/PRODUCT_ARCHITECTURE.md)
+- [Implementation status and remaining production gates](docs/IMPLEMENTATION_STATUS.md)
+- [Proposed production PostgreSQL schema](docs/POSTGRES_SCHEMA.sql)
+- [Executable development schema](apps/api/schema.sql)
+- [Screenshot evidence catalogue](docs/screens/SCREEN_CATALOGUE.md)
+- [Earlier platform specification](COURIER_PLATFORM_SPECIFICATION.md)
+
+## Structure
+
+`apps/api/`: modular authentication, HTTP, persistence, validation and job engine.
+
+`apps/web/`: authenticated driver, dispatch and admin web foundation.
+
+`packages/domain/`: explicit job workflow.
+
+`tests/`: integration/security/domain checks.
+
+`public/`: original disposable browser prototype, available separately with `npm run prototype` at http://localhost:4173. It uses synthetic localStorage data and simulated accounts. Its POD/signature demo is not part of the authenticated foundation and cannot serve as production evidence handling.
+
+`.data/`: ignored local database and document encryption key. Back up both together. Do not upload database files or real operational evidence to GitHub.
+
+## Current limitations
+
+This milestone establishes persistent accounts and jobs, server-side organisation/assignment permissions, sessions, audited transitions, shifts and live web invalidation. It is not a complete native mobile product or a production deployment. SQLite is a local development adapter; the proposed PostgreSQL schema has not been applied. Offline secure sync, managed object storage/key management, native background GPS, physical-device camera acceptance, customer portals, maps, routing, billing and reports remain scheduled work. Enabled foundation controls connect to implemented services; unavailable features are stated explicitly.
+
+Use synthetic data during review. Production TLS, OIDC/MFA/recovery, encryption/retention, managed infrastructure, full monitoring and device testing must be completed before real courier use.
+
+## Project governance and privacy review
+
+See [Phase 0 project baseline](docs/project/PROJECT_BASELINE.md) and [compliance/privacy baseline](docs/compliance/COMPLIANCE_BASELINE.md). Both distinguish draft assessments, implemented controls and production approval gaps. Rush IT is the confirmed interface name; the GitHub repository and Desktop folder retain RushITDriver.
+
+# Enterprise delivery baseline — 10 October 2026
+
+The latest enterprise brief requires architecture and project planning before further major feature implementation. Start with the [Enterprise Solution Blueprint](docs/project/ENTERPRISE_SOLUTION_BLUEPRINT.md), [code readiness and 95-item coverage assessment](docs/project/ENTERPRISE_READINESS.md), and [Sprint 0–2 backlog](docs/project/ENTERPRISE_BACKLOG.md). These are draft design artifacts, not production approval or claims that the proposed services exist. The local application remains version 0.3.0.
