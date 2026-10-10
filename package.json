@@ -6,6 +6,7 @@
     "node": ">=24.14.0"
   },
   "scripts": {
+    "dev": "node --watch apps/api/server.cjs",
     "start": "node apps/api/server.cjs",
     "setup": "node apps/api/setup.cjs",
     "prototype": "node server.cjs",

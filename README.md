@@ -9,10 +9,12 @@ Requires Node.js 24.14 or later. Install the locked dependencies for PDF parsing
 ```powershell
 cd C:\Users\RusheetBhatta\Desktop\RushITDriver
 npm run setup
-npm start
+npm run dev
 ```
 
 Setup asks for your organisation, administrator name/email and a password of at least 12 characters. Password input is hidden and only a salted scrypt hash is stored. There are no fixed accounts or demo passwords. Setup will not overwrite an existing account.
+
+For your existing configured project, skip setup and run `npm run dev`. This starts the authenticated application at http://localhost:4174 with automatic server restart when source files change. `npm start` runs the same application without watch mode. Keep the terminal running; press Ctrl+C to stop it.
 
 Open http://localhost:4174. Add driver and dispatcher accounts under **People & access**. Create a booking, choose its customer and POD policy, fill pickup/delivery and shipment details, then allocate it to a driver. Sign out and sign in as the driver, start a shift, and progress through acceptance, travel, pickup and delivery arrival. Failed delivery and dispatch-authorised reattempts are supported. Link reviewed cargo, scan its packages at both stops, then capture recipient, signature and photograph to complete delivery. Document intelligence reads PDF/JPG/PNG locally and requires review before saving cargo.
 
