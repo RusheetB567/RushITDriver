@@ -46,8 +46,8 @@ function createApp({ filename = path.resolve(__dirname,'../../.data/rushit.sqlit
   const server=http.createServer(async(req,res)=>{
     const requestId=crypto.randomUUID();
     res.setHeader('X-Request-ID',requestId);res.setHeader('X-Content-Type-Options','nosniff');
-    res.setHeader('Referrer-Policy','same-origin');res.setHeader('Cache-Control','no-store');
-    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+    res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Cache-Control','no-store');
+    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
     try{
       const port=server.address().port;
       const permittedHosts=[`127.0.0.1:${port}`,`localhost:${port}`];
@@ -56,7 +56,7 @@ function createApp({ filename = path.resolve(__dirname,'../../.data/rushit.sqlit
       const p=url.pathname;
       if(!p.startsWith('/api/')){
         requireThat(req.method==='GET',405,'METHOD_NOT_ALLOWED','Use GET for assets.');
-        const assets={'/':'index.html','/app.js':'app.js','/brand.js':'brand.js','/style.css':'style.css','/premium.js':'premium.js','/premium.css':'premium.css','/execution.js':'execution.js'};
+        const assets={'/':'index.html','/app.js':'app.js','/brand.js':'brand.js','/style.css':'style.css','/premium.js':'premium.js','/premium.css':'premium.css','/execution.js':'execution.js','/fleet.js':'fleet.js','/fleet.css':'fleet.css'};
         const file=assets[p];requireThat(file,404,'NOT_FOUND','Page not found.');
         const mime=p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'text/html';
         res.writeHead(200,{'Content-Type':mime+'; charset=utf-8'});return res.end(fs.readFileSync(path.join(__dirname,'../web',file)));
@@ -82,6 +82,27 @@ function createApp({ filename = path.resolve(__dirname,'../../.data/rushit.sqlit
         return send(res,200,{user:auth.publicUser(user)});
       }
       const user=auth.authenticate(db,req);
+      if(p==='/api/v1/locations'&&req.method==='GET'){
+        auth.requireRole(user,'admin','dispatcher');
+        const items=db.prepare(`SELECT u.id,u.name,s.state,p.latitude,p.longitude,p.accuracy,p.sampled_at,
+          (SELECT count(*) FROM assignments a JOIN jobs j ON j.id=a.job_id WHERE a.driver_id=u.id AND a.active=1 AND j.status NOT IN ('DELIVERED','CANCELLED')) workload
+          FROM users u LEFT JOIN shifts s ON s.driver_id=u.id AND s.finished_at IS NULL
+          LEFT JOIN driver_positions p ON p.driver_id=u.id AND p.organisation_id=u.organisation_id
+          WHERE u.organisation_id=? AND u.role='driver' AND u.disabled=0 ORDER BY u.name`).all(user.organisation_id);
+        return send(res,200,{items:items.map(item=>({...item,latitude:item.state==='Available'?item.latitude:null,longitude:item.state==='Available'?item.longitude:null})),serverTime:now()});
+      }
+      if(p==='/api/v1/locations'&&['POST','DELETE'].includes(req.method)){
+        auth.requireRole(user,'driver');
+        if(req.method==='DELETE'){db.prepare('DELETE FROM driver_positions WHERE organisation_id=? AND driver_id=?').run(user.organisation_id,user.id);return send(res,200,{sharing:false});}
+        const b=await body(req);v.fields(b,['location']);const point=v.location(b.location);requireThat(point,400,'LOCATION_REQUIRED','Provide a GPS location.');
+        const shift=db.prepare('SELECT state FROM shifts WHERE driver_id=? AND finished_at IS NULL').get(user.id);
+        requireThat(shift?.state==='Available',409,'SHIFT_REQUIRED','Start or resume your shift before sharing location.');
+        const sampled=new Date(Date.parse(point.sampledAt)).toISOString();
+        db.prepare(`INSERT INTO driver_positions VALUES (?,?,?,?,?,?,?) ON CONFLICT(organisation_id,driver_id)
+          DO UPDATE SET latitude=excluded.latitude,longitude=excluded.longitude,accuracy=excluded.accuracy,sampled_at=excluded.sampled_at,received_at=excluded.received_at
+          WHERE excluded.sampled_at>driver_positions.sampled_at`).run(user.organisation_id,user.id,point.latitude,point.longitude,point.accuracy,sampled,now());
+        return send(res,200,{sharing:true});
+      }
       if(p==='/api/v1/dashboard'&&req.method==='GET')return send(res,200,logistics.summary(user));
       if(p==='/api/v1/batch'&&req.method==='POST'){
         auth.requireRole(user,'driver');const b=await body(req);v.fields(b,['action','items']);v.enumValue(b.action,'Batch action',['arrive_pickup','pickup','arrive_delivery']);requireThat(Array.isArray(b.items)&&b.items.length>0&&b.items.length<=30,400,'BATCH_LIMIT','Select 1–30 jobs.');

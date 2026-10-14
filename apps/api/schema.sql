@@ -142,3 +142,9 @@ CREATE TABLE IF NOT EXISTS shift_end_requests (
  FOREIGN KEY(shift_id) REFERENCES shifts(id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS one_end_request ON shift_end_requests(shift_id) WHERE approved_at IS NULL;
+CREATE TABLE IF NOT EXISTS driver_positions (
+ organisation_id TEXT NOT NULL, driver_id TEXT NOT NULL, latitude REAL NOT NULL,
+ longitude REAL NOT NULL, accuracy REAL NOT NULL, sampled_at TEXT NOT NULL, received_at TEXT NOT NULL,
+ PRIMARY KEY(organisation_id,driver_id),
+ FOREIGN KEY(organisation_id,driver_id) REFERENCES users(organisation_id,id)
+);

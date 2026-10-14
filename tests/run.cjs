@@ -2,3 +2,4 @@
 require('./workflow.test.cjs');
 require('./foundation.test.cjs');
 require('./logistics.test.cjs');
+require('./fleet.test.cjs');

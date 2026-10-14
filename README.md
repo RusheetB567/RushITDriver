@@ -68,3 +68,11 @@ See [Phase 0 project baseline](docs/project/PROJECT_BASELINE.md) and [compliance
 # Enterprise delivery baseline — 10 October 2026
 
 The latest enterprise brief requires architecture and project planning before further major feature implementation. Start with the [Enterprise Solution Blueprint](docs/project/ENTERPRISE_SOLUTION_BLUEPRINT.md), [code readiness and 95-item coverage assessment](docs/project/ENTERPRISE_READINESS.md), and [Sprint 0–2 backlog](docs/project/ENTERPRISE_BACKLOG.md). These are draft design artifacts, not production approval or claims that the proposed services exist. The local application remains version 0.3.0.
+
+## Live fleet map — 14 October 2026
+
+The operations sidebar now includes Live fleet map. It polls tenant-scoped latest driver positions every 10 seconds, supports driver selection/search and map zoom, and shows shift availability, active workload, sample age and accuracy. Markers become stale after 90 seconds; no simulated drivers or fabricated ETAs are supplied. OpenStreetMap tiles require internet and are suitable for this local review; production provider selection remains open.
+
+Drivers explicitly choose Share my location during an Available shift. Browser permission is required. Tracking works only while the browser page remains open; mobile background tracking is not implemented. Stop sharing removes the latest stored point. Off-shift/on-break coordinates are hidden and new samples are rejected. Only the latest position is retained, not a historical movement trail. Physical-device GPS and cross-device deployment remain acceptance work. The server is loopback-only, so a phone cannot connect to this local URL yet.
+
+Verification: 33 automated tests pass, including location role/tenant/shift validation, stale sample rejection, monotonic updates and removal. App, health endpoint and fleet assets return HTTP 200. Browser visual verification was blocked by the browser URL policy, so no screenshot or real-device tracking claim is made.
